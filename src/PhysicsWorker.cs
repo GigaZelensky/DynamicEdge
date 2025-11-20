@@ -18,6 +18,7 @@ namespace DynamicEdge
 
         private readonly List<Rectangle> screenCache = new List<Rectangle>();
         private Rectangle currentScreen;
+        private Rectangle virtualScreenBounds;
 
         private NativeMethods.RECT? activeClip = null;
 
@@ -25,6 +26,8 @@ namespace DynamicEdge
         private int inputVelocityX = 0;
         private int inputVelocityY = 0;
         private float membraneHealth;
+        private int lastInputTick;
+        private const int IdleStopGraceMs = 3000;
 
         private IntPtr rawInputBuffer;
         private int rawInputBufferSize;
@@ -54,6 +57,7 @@ namespace DynamicEdge
             physicsTimer.Interval = this.settings.PollRateIdle;
             physicsTimer.Tick += OnPhysicsTick;
 
+            lastInputTick = Environment.TickCount;
             ResetBarrier();
         }
 
@@ -64,6 +68,7 @@ namespace DynamicEdge
             cooldownFrames = 0;
             activeClip = null;
             physicsTimer.Interval = settings.PollRateIdle;
+            lastInputTick = Environment.TickCount;
             ResetBarrier();
         }
 
@@ -110,6 +115,7 @@ namespace DynamicEdge
             {
                 screenCache.Add(s.Bounds);
             }
+            virtualScreenBounds = SystemInformation.VirtualScreen;
 
             Point cursorPosition;
             NativeMethods.GetCursorPos(out cursorPosition);
@@ -158,7 +164,11 @@ namespace DynamicEdge
         {
             isActive = enabled;
             if (isActive) ResetBarrier();
-            else UnlockCursor();
+            else
+            {
+                physicsTimer.Stop();
+                UnlockCursor();
+            }
         }
 
         protected override void WndProc(ref Message m)
@@ -173,6 +183,13 @@ namespace DynamicEdge
 
         private void ProcessRawInput(IntPtr lParam)
         {
+            if (!isActive || screenCache.Count <= 1)
+            {
+                inputVelocityX = 0;
+                inputVelocityY = 0;
+                return;
+            }
+
             uint size = 0;
             NativeMethods.GetRawInputData(lParam, 0x10000003, IntPtr.Zero, ref size, 24);
 
@@ -192,6 +209,13 @@ namespace DynamicEdge
 
                         inputVelocityX += relativeX;
                         inputVelocityY += relativeY;
+                        lastInputTick = Environment.TickCount;
+
+                        if (!physicsTimer.Enabled)
+                        {
+                            physicsTimer.Interval = settings.PollRateActive;
+                            physicsTimer.Start();
+                        }
                     }
                 }
             }
@@ -208,6 +232,7 @@ namespace DynamicEdge
                 Point p;
                 NativeMethods.GetCursorPos(out p);
                 currentScreen = ResolveScreen(p);
+                lastInputTick = Environment.TickCount;
                 physicsTimer.Start();
             }
             else
@@ -222,6 +247,12 @@ namespace DynamicEdge
 
             try
             {
+                if (screenCache.Count <= 1)
+                {
+                    physicsTimer.Stop();
+                    return;
+                }
+
                 int velX = inputVelocityX;
                 int velY = inputVelocityY;
                 inputVelocityX = 0;
@@ -264,6 +295,7 @@ namespace DynamicEdge
                     if (membraneHealth < settings.MaxHealth) membraneHealth = settings.MaxHealth;
 
                     EngageBarrier(currentScreen);
+                    MaybeStopForIdle(velX, velY, minDist);
                     return;
                 }
                 else
@@ -317,6 +349,8 @@ namespace DynamicEdge
                         if (membraneHealth > settings.MaxHealth) membraneHealth = settings.MaxHealth;
                     }
                 }
+
+                MaybeStopForIdle(velX, velY, minDist);
             }
             catch (Exception ex)
             {
@@ -339,7 +373,11 @@ namespace DynamicEdge
 
         private void EngageBarrier(Rectangle bounds)
         {
-            Rectangle vs = SystemInformation.VirtualScreen;
+            Rectangle vs = virtualScreenBounds;
+            if (vs.Width == 0 || vs.Height == 0)
+            {
+                vs = SystemInformation.VirtualScreen;
+            }
 
             int left = Math.Max(bounds.Left, vs.Left);
             int right = Math.Min(bounds.Right, vs.Right);
@@ -388,6 +426,19 @@ namespace DynamicEdge
         {
             NativeMethods.ClipCursor(IntPtr.Zero);
             activeClip = null;
+        }
+
+        private void MaybeStopForIdle(int velX, int velY, int minDist)
+        {
+            if (cooldownFrames > 0 || !physicsTimer.Enabled) return;
+
+            int elapsed = unchecked(Environment.TickCount - lastInputTick);
+            int idleThreshold = Math.Max(settings.PollRateIdle * 3, IdleStopGraceMs);
+            if (elapsed < idleThreshold) return;
+            if (velX != 0 || velY != 0) return;
+            if (minDist <= settings.IdleResetDistance) return;
+
+            physicsTimer.Stop();
         }
 
         public new void Dispose()

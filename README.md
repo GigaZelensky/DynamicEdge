@@ -7,6 +7,7 @@ Unlike the default Windows "sticky corners" (which are often buggy, laggy, or in
 ### 🚀 Key Features
 
 *   **Physics-Based Barrier:** The edge isn't just a wall; it has "health." Moving slowly drains the barrier's health, allowing you to push through intentionally, while a fast flick breaks it instantly.
+*   **Fully Configurable:** Tune the barrier strength, regeneration rate, break threshold, and polling speeds via a dedicated **Settings** menu.
 *   **Vertical & Offset Support:** Works perfectly with **vertically stacked** monitors and screens with significant **offsets/gaps**. No more cursor getting stuck in the "dead space" between displays.
 *   **Zero Lag:** Uses `RawInput` for high-frequency mouse velocity tracking, bypassing standard Windows cursor ballistics for instant reaction times.
 *   **Ultra-Efficient:** Runs with **EcoQoS** (Efficiency Mode) and idle priority. Uses adaptive polling (drops to 200ms checks when away from edges, ramps up to 10ms when active).
@@ -31,6 +32,7 @@ DynamicEdge treats the border between your monitors like a physical membrane:
 
 **System Tray Options:**
 *   **Toggle Edge:** Temporarily disable/enable the barrier.
+*   **Settings...:** Open the configuration window to adjust physics and sensitivity.
 *   **Start with Windows:** Sets the application to launch automatically on boot.
 
 ### 🛠️ Technical Requirements
@@ -45,7 +47,10 @@ DynamicEdge treats the border between your monitors like a physical membrane:
 DynamicEdge uses `System.Windows.Forms.Screen.FromPoint` to detect which monitor you are on. Ensure your monitors are arranged correctly in **Windows Display Settings** without massive gaps between them.
 
 **It feels like there is no resistance.**
-You might be flicking too fast! The physics engine is tuned to allow fast movements to pass through unimpeded so it doesn't hinder your workflow. Try moving the mouse slowly against the edge to feel the resistance.
+You might be flicking too fast! Try moving the mouse slowly against the edge. You can also increase **Max Health** or the **Break Threshold** in the Settings menu.
+
+**Something isn't working correctly.**
+Check the logs folder at `%APPDATA%\DynamicEdge\logs` for error details. You can also use the **Reset** button in Settings to restore default values.
 
 ### 📄 License
 
