@@ -2,6 +2,7 @@
 setlocal
 set "APP_VERSION=1.0.1"
 set "OUT_NAME=DynamicEdge-%APP_VERSION%.exe"
+set "SRC_DIR=%~dp0src"
 echo ==========================================
 echo      Dynamic Edge Debug Builder
 echo ==========================================
@@ -31,7 +32,7 @@ echo ^</assembly^>
 echo Compiling...
 :: Added /unsafe for performance optimizations
 :: Added /r references to ensure UI libraries are found
-"%csc%" /target:winexe /unsafe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Runtime.Serialization.dll /out:%OUT_NAME% /win32manifest:app.manifest *.cs
+"%csc%" /target:winexe /unsafe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Runtime.Serialization.dll /out:%OUT_NAME% /win32manifest:app.manifest "%SRC_DIR%\\*.cs"
 
 :: Cleanup
 del app.manifest
