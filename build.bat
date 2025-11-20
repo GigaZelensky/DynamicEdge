@@ -38,7 +38,7 @@ if exist "%OUT_NAME%" (
     echo 1. %OUT_NAME%
     if exist "%OUT_NAME%.config" echo 2. %OUT_NAME%.config
     echo.
-    echo (Keep these files together)
+    echo Keep these files together
 ) else (
     echo Build Failed.
 )
