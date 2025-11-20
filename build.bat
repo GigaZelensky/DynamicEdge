@@ -1,5 +1,7 @@
 @echo off
 setlocal
+set "APP_VERSION=1.0.1"
+set "OUT_NAME=DynamicEdge-%APP_VERSION%.exe"
 echo ==========================================
 echo      Dynamic Edge Debug Builder
 echo ==========================================
@@ -16,7 +18,7 @@ echo Creating Manifest...
 (
 echo ^<?xml version="1.0" encoding="utf-8"?^>
 echo ^<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1"^>
-echo   ^<assemblyIdentity version="1.0.0.0" name="DynamicEdge"/^>
+echo   ^<assemblyIdentity version="1.0.1" name="DynamicEdge"/^>
 echo   ^<application xmlns="urn:schemas-microsoft-com:asm.v3"^>
 echo     ^<windowsSettings^>
 echo       ^<dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings"^>PerMonitorV2^</dpiAwareness^>
@@ -29,14 +31,14 @@ echo ^</assembly^>
 echo Compiling...
 :: Added /unsafe for performance optimizations
 :: Added /r references to ensure UI libraries are found
-"%csc%" /target:winexe /unsafe /r:System.Windows.Forms.dll /r:System.Drawing.dll /out:DynamicEdge.exe /win32manifest:app.manifest Program.cs
+"%csc%" /target:winexe /unsafe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Runtime.Serialization.dll /out:%OUT_NAME% /win32manifest:app.manifest *.cs
 
 :: Cleanup
 del app.manifest
 
-if exist DynamicEdge.exe (
+if exist %OUT_NAME% (
     echo.
-    echo Success! Run DynamicEdge.exe
+    echo Success! Run %OUT_NAME%
 ) else (
     echo Build Failed.
 )
