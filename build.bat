@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set "APP_VERSION=1.0.1"
+set "APP_VERSION=1.0.2"
 set "OUT_NAME=DynamicEdge-%APP_VERSION%.exe"
 set "SRC_DIR=%~dp0src"
 set "MANIFEST=%~dp0app.manifest"
