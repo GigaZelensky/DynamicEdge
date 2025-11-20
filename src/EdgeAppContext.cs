@@ -13,6 +13,7 @@ namespace DynamicEdge
         private Icon iconDisabled;
         private ToolStripMenuItem startupItem;
         private AppSettings settings;
+        private SettingsForm settingsForm;
 
         public EdgeAppContext(AppSettings initialSettings)
         {
@@ -91,12 +92,16 @@ namespace DynamicEdge
 
         private void OnSettingsClick(object sender, EventArgs e)
         {
-            using (var form = new SettingsForm(settings, ApplySettings))
+            if (settingsForm == null || settingsForm.IsDisposed)
             {
-                if (form.ShowDialog() == DialogResult.OK)
-                {
-                    ApplySettings(form.Settings);
-                }
+                settingsForm = new SettingsForm(settings, ApplySettings);
+                settingsForm.FormClosed += (s, args) => { settingsForm = null; };
+                settingsForm.Show();
+            }
+            else
+            {
+                settingsForm.BringToFront();
+                settingsForm.Focus();
             }
         }
 

@@ -60,11 +60,11 @@ namespace DynamicEdge
 
     public static class AppSettingsStore
     {
-        private static readonly string ConfigDirectory = Path.Combine(
+        public static readonly string ConfigDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "DynamicEdge");
 
-        private static readonly string ConfigPath = Path.Combine(ConfigDirectory, "settings.json");
+        public static readonly string ConfigPath = Path.Combine(ConfigDirectory, "settings.json");
 
         public static AppSettings LoadOrDefault()
         {
@@ -86,7 +86,7 @@ namespace DynamicEdge
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to load settings; using defaults", ex);
+                Logger.LogError("Failed to load settings from " + ConfigPath + "; using defaults", ex);
             }
 
             return AppSettings.CreateDefault();
@@ -107,7 +107,7 @@ namespace DynamicEdge
             }
             catch (Exception ex)
             {
-                Logger.LogError("Failed to save settings", ex);
+                Logger.LogError("Failed to save settings to " + ConfigPath, ex);
             }
         }
     }

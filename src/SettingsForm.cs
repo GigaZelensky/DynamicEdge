@@ -20,6 +20,7 @@ namespace DynamicEdge
         private NumericUpDown edgeProximityInput;
         private NumericUpDown idleResetInput;
         private NumericUpDown speedEaseInput;
+        private ToolTip tooltips;
 
         public SettingsForm(AppSettings current, Action<AppSettings> applyCallback)
         {
@@ -37,6 +38,8 @@ namespace DynamicEdge
             AutoSize = true;
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
             MinimumSize = new Size(380, 0);
+
+            tooltips = new ToolTip();
 
             BuildLayout();
             PopulateValues();
@@ -67,16 +70,16 @@ namespace DynamicEdge
             idleResetInput = CreateNumeric(5, 1000, 5);
             speedEaseInput = CreateNumeric(0, 1, 0.01m, 2);
 
-            AddRow(layout, "Max health", maxHealthInput, 0);
-            AddRow(layout, "Regen per tick", regenInput, 1);
-            AddRow(layout, "Damage multiplier", damageInput, 2);
-            AddRow(layout, "Break threshold", breakThresholdInput, 3);
-            AddRow(layout, "Cooldown frames", cooldownInput, 4);
-            AddRow(layout, "Poll rate (active ms)", pollActiveInput, 5);
-            AddRow(layout, "Poll rate (idle ms)", pollIdleInput, 6);
-            AddRow(layout, "Edge proximity px", edgeProximityInput, 7);
-            AddRow(layout, "Idle reset distance", idleResetInput, 8);
-            AddRow(layout, "Speed ease multiplier", speedEaseInput, 9);
+            AddRow(layout, "Max health", maxHealthInput, 0, "Starting membrane health at the monitor edge.");
+            AddRow(layout, "Regen per tick", regenInput, 1, "How quickly the membrane restores when not pushed.");
+            AddRow(layout, "Damage multiplier", damageInput, 2, "How much pushing force reduces health.");
+            AddRow(layout, "Break threshold", breakThresholdInput, 3, "Instant break force for very fast flicks.");
+            AddRow(layout, "Cooldown frames", cooldownInput, 4, "Frames to wait before reforming after a break.");
+            AddRow(layout, "Poll rate (active ms)", pollActiveInput, 5, "Polling interval when near an edge (lower = snappier).");
+            AddRow(layout, "Poll rate (idle ms)", pollIdleInput, 6, "Polling interval away from edges (higher = lower CPU).");
+            AddRow(layout, "Edge proximity px", edgeProximityInput, 7, "How close to the edge counts as contact.");
+            AddRow(layout, "Idle reset distance", idleResetInput, 8, "Distance from edges to relax to idle polling.");
+            AddRow(layout, "Speed ease multiplier", speedEaseInput, 9, "Extra force applied based on pointer speed (higher = easier to break when moving fast).");
 
             var buttons = new FlowLayoutPanel
             {
@@ -123,17 +126,24 @@ namespace DynamicEdge
             };
         }
 
-        private void AddRow(TableLayoutPanel layout, string label, Control control, int row)
+        private void AddRow(TableLayoutPanel layout, string label, Control control, int row, string tooltip = null)
         {
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            layout.Controls.Add(new Label
+            var lbl = new Label
             {
                 Text = label,
                 AutoSize = true,
                 Anchor = AnchorStyles.Left,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Margin = new Padding(0, 6, 0, 0)
-            }, 0, row);
+            };
+            layout.Controls.Add(lbl, 0, row);
+
+            if (!string.IsNullOrEmpty(tooltip))
+            {
+                tooltips.SetToolTip(lbl, tooltip);
+                tooltips.SetToolTip(control, tooltip);
+            }
 
             layout.Controls.Add(control, 1, row);
         }
