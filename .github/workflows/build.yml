@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch: # Allows manual triggering
+  workflow_dispatch:
 
 jobs:
   build:
@@ -22,9 +22,26 @@ jobs:
     - name: Compile Application
       shell: powershell
       run: |
-        # 1. Locate the C# Compiler (CSC.exe) similar to your batch file
-        $csc = Get-ChildItem -Path "$env:windir\Microsoft.NET\Framework64\v4*" -Filter "csc.exe" | Select-Object -Last 1 -ExpandProperty FullName
-        Write-Host "Found Compiler at: $csc"
+        # 1. Robustly locate the latest .NET Framework 4.x directory
+        $frameworkPath = Join-Path $env:windir "Microsoft.NET\Framework64"
+        $latestVersion = Get-ChildItem -Path $frameworkPath -Filter "v4*" | 
+                         Sort-Object Name -Descending | 
+                         Select-Object -First 1
+        
+        if (-not $latestVersion) {
+            Write-Error "Could not find .NET Framework v4 directory in $frameworkPath"
+            exit 1
+        }
+
+        $csc = Join-Path $latestVersion.FullName "csc.exe"
+
+        Write-Host "Using Framework Dir: $($latestVersion.FullName)"
+        Write-Host "Compiler Path: $csc"
+
+        if (-not (Test-Path $csc)) {
+            Write-Error "csc.exe not found at $csc"
+            exit 1
+        }
 
         # 2. Define Output Names
         $outName = "DynamicEdge-$env:APP_VERSION.exe"
@@ -43,6 +60,7 @@ jobs:
             "src\*.cs"
         )
         
+        Write-Host "Running: $csc $buildArgs"
         & $csc $buildArgs
 
         # 4. Handle Config File
@@ -55,7 +73,7 @@ jobs:
         if (Test-Path $outName) {
             Write-Host "Build Success: $outName"
         } else {
-            Write-Error "Build Failed"
+            Write-Error "Build Failed: Output file not created."
             exit 1
         }
 
