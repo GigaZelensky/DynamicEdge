@@ -1,0 +1,70 @@
+name: Build DynamicEdge
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Environment Variables
+      run: |
+        echo "APP_VERSION=1.0.2" >> $env:GITHUB_ENV
+
+    - name: Compile Application
+      shell: powershell
+      run: |
+        # 1. Locate the C# Compiler (CSC.exe) similar to your batch file
+        $csc = Get-ChildItem -Path "$env:windir\Microsoft.NET\Framework64\v4*" -Filter "csc.exe" | Select-Object -Last 1 -ExpandProperty FullName
+        Write-Host "Found Compiler at: $csc"
+
+        # 2. Define Output Names
+        $outName = "DynamicEdge-$env:APP_VERSION.exe"
+        $configName = "$outName.config"
+        
+        # 3. Compile
+        # Equivalent to: csc /target:winexe /unsafe /r:... /out:... /win32manifest:... src\*.cs
+        $buildArgs = @(
+            "/target:winexe",
+            "/unsafe",
+            "/r:System.Windows.Forms.dll",
+            "/r:System.Drawing.dll",
+            "/r:System.Runtime.Serialization.dll",
+            "/out:$outName",
+            "/win32manifest:app.manifest",
+            "src\*.cs"
+        )
+        
+        & $csc $buildArgs
+
+        # 4. Handle Config File
+        if (Test-Path "src\app.config") {
+            Copy-Item "src\app.config" -Destination $configName
+            Write-Host "Config copied."
+        }
+
+        # 5. Verify Build
+        if (Test-Path $outName) {
+            Write-Host "Build Success: $outName"
+        } else {
+            Write-Error "Build Failed"
+            exit 1
+        }
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: DynamicEdge-Release
+        path: |
+          DynamicEdge-*.exe
+          DynamicEdge-*.exe.config
+          README.md
+          LICENSE
